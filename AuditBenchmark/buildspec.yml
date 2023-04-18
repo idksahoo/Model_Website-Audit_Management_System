@@ -1,0 +1,27 @@
+version: 0.2
+phases:
+  install:
+    runtime-versions:
+      docker: 18
+  pre_build:
+    commands:
+      - echo "Entered the pre-build phase"
+      - $(aws ecr get-login  --no-include-email --region us-east-2)
+  build:
+    commands:
+      - echo "Entered build phase"
+      - cd AuditBenchmark
+      - mvn compile
+      - mvn package
+      - echo " building docker image"
+      - docker build -t service/benchmark .
+      - docker tag service/benchmark 885843804602.dkr.ecr.us-east-2.amazonaws.com/pod2-ij50-benchmark-repo:benchmark
+  post_build:
+    commands:
+    - echo "Entered the post-build phase"
+    - docker push 885843804602.dkr.ecr.us-east-2.amazonaws.com/pod2-ij50-benchmark-repo:benchmark
+    - printf '[{"name":"benchmark-container","imageUri":"%s"}]' 885843804602.dkr.ecr.us-east-2.amazonaws.com/pod2-ij50-benchmark-repo:benchmark > taskdefinition.json
+artifacts:
+  files: 
+    - AuditBenchmark/taskdefinition.json
+    
